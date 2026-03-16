@@ -1,7 +1,22 @@
+import os
 import json
 import logging
 from logging.handlers import RotatingFileHandler
 from concurrent.futures import ThreadPoolExecutor
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+
+def start_health_server():
+    port = int(os.environ.get("PORT", 10000))
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+        def log_message(self, *args):
+            pass
+    server = HTTPServer(("0.0.0.0", port), Handler)
+    server.serve_forever()
 
 from datalayer.item_monitor import ItemMonitor
 from managers.worker import Worker
@@ -29,6 +44,7 @@ def parse_items_to_monitor():
 
 if __name__ == "__main__":
     configure_logger()
+        threading.Thread(target=start_health_server, daemon=True).start()
     items = parse_items_to_monitor()
 
     with ThreadPoolExecutor(max_workers=10) as executor:
