@@ -17,6 +17,9 @@ def start_health_server():
             self.send_response(200)
             self.end_headers()
             self.wfile.write(b"OK")
+        def do_HEAD(self):
+            self.send_response(200)
+            self.end_headers()
         def log_message(self, *args):
             pass
     server = HTTPServer(("0.0.0.0", port), Handler)
@@ -34,7 +37,6 @@ def configure_logger():
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s'))
 
-    # Configure the root logger with both handlers
     logging.basicConfig(level=logging.NOTSET,
                         handlers=[console_handler, file_handler])
 
