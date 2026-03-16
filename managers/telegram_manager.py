@@ -12,9 +12,7 @@ ITEM_TEXT = "- Artículo: {}\n" \
 
 class TelegramManager:
     def __init__(self):
-        token, channel = self.get_config()
-        self._channel = channel
-        self._bot = telegram.Bot(token=token)
+        self._token, self._channel = self.get_config()
 
     def get_config(self):
         config_file = 'config.yaml'
@@ -37,4 +35,5 @@ class TelegramManager:
             article.get_allows_shipping(),
             article.get_url()
         )
-        await self._bot.send_message(chat_id=self._channel, text=message)
+        async with telegram.Bot(token=self._token) as bot:
+            await bot.send_message(chat_id=self._channel, text=message)
