@@ -1,4 +1,3 @@
-
 class WallapopArticle:
     def __init__(self, id, title, description, price, currency, location, allows_shipping, url):
         self._id = id
@@ -13,14 +12,14 @@ class WallapopArticle:
     @classmethod
     def load_from_json(cls, json_data):
         return cls(
-            json_data['id'],
-            json_data['title'],
-            json_data['description'],
-            json_data['price']['amount'],
-            json_data['price']['currency'],
-            json_data['location']['city'],
-            json_data['shipping']['user_allows_shipping'],
-            json_data['web_slug']
+            json_data.get('id', ''),
+            json_data.get('title', ''),
+            json_data.get('description', ''),
+            json_data.get('price', {}).get('amount', 0),
+            json_data.get('price', {}).get('currency', 'EUR'),
+            json_data.get('location', {}).get('city', 'Desconocida'),
+            json_data.get('shipping', {}).get('user_allows_shipping', False),
+            json_data.get('web_slug', '')
         )
 
     def get_id(self):
