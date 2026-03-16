@@ -5,7 +5,7 @@ from datalayer.wallapop_article import WallapopArticle
 from managers.telegram_manager import TelegramManager
 import traceback
 
-REQUEST_SLEEP_TIME = 15
+REQUEST_SLEEP_TIME = 65
 REQUEST_RETRY_TIME = 3
 ERROR_SLEEP_TIME = 30
 NOTIFIED_ARTICLES_LIMIT = 300
