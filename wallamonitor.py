@@ -6,6 +6,10 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+from datalayer.item_monitor import ItemMonitor
+from managers.worker import Worker
+
+
 def start_health_server():
     port = int(os.environ.get("PORT", 10000))
     class Handler(BaseHTTPRequestHandler):
@@ -18,8 +22,6 @@ def start_health_server():
     server = HTTPServer(("0.0.0.0", port), Handler)
     server.serve_forever()
 
-from datalayer.item_monitor import ItemMonitor
-from managers.worker import Worker
 
 def configure_logger():
     logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -30,11 +32,12 @@ def configure_logger():
 
     file_handler = RotatingFileHandler('monitor.log', maxBytes=10e6)
     file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(name)s - %(message)s'))
 
     # Configure the root logger with both handlers
     logging.basicConfig(level=logging.NOTSET,
                         handlers=[console_handler, file_handler])
+
 
 def parse_items_to_monitor():
     with open("args.json") as f:
@@ -42,13 +45,13 @@ def parse_items_to_monitor():
         items = [ItemMonitor.load_from_json(item) for item in args]
     return items
 
+
 if __name__ == "__main__":
     configure_logger()
-        threading.Thread(target=start_health_server, daemon=True).start()
+    threading.Thread(target=start_health_server, daemon=True).start()
     items = parse_items_to_monitor()
 
     with ThreadPoolExecutor(max_workers=10) as executor:
         for item in items:
             worker = Worker(item)
             executor.submit(worker.run)
-
