@@ -26,11 +26,10 @@ class Worker:
             f"&order_by=newest"
             f"&latitude={self._item_monitoring._latitude}"
             f"&longitude={self._item_monitoring._longitude}"
-            f"&min_sale_price={self._item_monitoring._min_price}" 
-            f"&max_sale_price={self._item_monitoring._max_price}" 
+            f"&min_sale_price={self._item_monitoring._min_price}"
+            f"&max_sale_price={self._item_monitoring._max_price}"
             f"&language=es_ES"
             f"&section_type=organic_search_results"
-            
         )
 
         if self._item_monitoring._max_distance != "0":
@@ -39,11 +38,16 @@ class Worker:
         if self._item_monitoring.get_condition() != "all":
             url += f"&condition={self._item_monitoring.get_condition()}"  # new, as_good_as_new, good, fair, has_given_it_all
 
+        if hasattr(self._item_monitoring, '_storage_capacity') and self._item_monitoring._storage_capacity:
+            url += f"&filters_source=default_filters&storage_capacity={self._item_monitoring._storage_capacity}"
+
+        if hasattr(self._item_monitoring, '_model') and self._item_monitoring._model:
+            url += f"&model={self._item_monitoring._model}"
+
         return url
 
     def _request_articles(self):
         url = self._create_url()
-
         while True:
             try:
                 headers = {
@@ -55,8 +59,7 @@ class Worker:
                 break
             except requests.exceptions.RequestException as err:
                 self.logger.error(f"Request Exception: {err}")
-            time.sleep(REQUEST_RETRY_TIME)
-
+                time.sleep(REQUEST_RETRY_TIME)
         json_response = response.json()
         json_items = json_response['data']['section']['payload']['items']
         articles = self._parse_json_response(json_items)
@@ -79,11 +82,11 @@ class Worker:
 
     def _title_has_required_words(self, article_title):
         return not self._item_monitoring.get_title_must_include() \
-                or self._has_words(article_title, self._item_monitoring.get_title_must_include())
+            or self._has_words(article_title, self._item_monitoring.get_title_must_include())
 
     def _description_has_required_words(self, article_description):
         return not self._item_monitoring.get_description_must_include() \
-                or self._has_words(article_description, self._item_monitoring.get_description_must_include())
+            or self._has_words(article_description, self._item_monitoring.get_description_must_include())
 
     def _title_first_word_is_excluded(self, article_title):
         first_word = article_title.split()[0]
@@ -95,15 +98,14 @@ class Worker:
     def _meets_item_conditions(self, article):
         if article in self._notified_articles:
             return False
-
         article_title = article.get_title().lower()
         article_description = article.get_description().lower()
         if (
-            self._title_has_required_words(article_title) and
-            self._description_has_required_words(article_description) and
-            not self._title_has_excluded_words(article_title) and
-            not self._description_has_excluded_words(article_description) and
-            not self._title_first_word_is_excluded(article_title)
+            self._title_has_required_words(article_title)
+            and self._description_has_required_words(article_description)
+            and not self._title_has_excluded_words(article_title)
+            and not self._description_has_excluded_words(article_description)
+            and not self._title_first_word_is_excluded(article_title)
         ):
             return True
         else:
@@ -112,7 +114,6 @@ class Worker:
 
     def work(self):
         exec_times = []
-        
         while True:
             start_time = time.time()
             articles = self._request_articles()
@@ -124,8 +125,8 @@ class Worker:
                         new_articles += 1
                     except Exception as e:
                         self.logger.error(f"{self._item_monitoring.get_search_query()} worker crashed: {e}")
-                self._notified_articles.insert(0, article)
-                self._notified_articles = self._notified_articles[:NOTIFIED_ARTICLES_LIMIT]
+                    self._notified_articles.insert(0, article)
+            self._notified_articles = self._notified_articles[:NOTIFIED_ARTICLES_LIMIT]
             time.sleep(REQUEST_SLEEP_TIME)
             exec_times.append(time.time() - start_time)
             self.logger.info(
@@ -133,14 +134,13 @@ class Worker:
                 f"Execution time stats - Last: {exec_times[-1]:.2f}s, Max: {max(exec_times):.2f}s, "
                 f"Average: {sum(exec_times) / len(exec_times):.2f}s."
             )
-    
+
     def run(self):
         while True:
             try:
-                self.logger.info(f"Wallapop monitor worker started -  {self._item_monitoring.get_search_query()}")
+                self.logger.info(f"Wallapop monitor worker started - {self._item_monitoring.get_search_query()}")
                 self.work()
             except Exception as e:
                 self.logger.error(f"{''.join(traceback.format_exception(None, e, e.__traceback__))}")
                 self.logger.error(f"{self._item_monitoring.get_search_query()} worker crashed. Restarting worker...")
                 time.sleep(ERROR_SLEEP_TIME)
-
