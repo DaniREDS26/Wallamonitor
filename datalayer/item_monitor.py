@@ -1,9 +1,8 @@
-
 class ItemMonitor:
     def __init__(self, search_query, latitude, longitude, max_distance,
                  condition, min_price, max_price, title_exclude,
                  description_exclude, title_must_include, description_must_include,
-                 title_first_word_exclude):
+                 title_first_word_exclude, storage_capacity='', model=''):
         self._search_query = search_query
         self._latitude = latitude
         self._longitude = longitude
@@ -16,7 +15,9 @@ class ItemMonitor:
         self._title_must_include = title_must_include
         self._description_must_include = description_must_include
         self._title_first_word_exclude = title_first_word_exclude
-    
+        self._storage_capacity = storage_capacity
+        self._model = model
+
     @classmethod
     def load_from_json(cls, json_data):
         return cls(
@@ -31,7 +32,9 @@ class ItemMonitor:
             json_data['description_exclude'],
             json_data['title_must_include'],
             json_data['description_must_include'],
-            json_data['title_first_word_exclude']
+            json_data['title_first_word_exclude'],
+            json_data.get('storage_capacity', ''),
+            json_data.get('model', '')
         )
 
     def get_search_query(self):
@@ -69,3 +72,9 @@ class ItemMonitor:
 
     def get_title_first_word_exclude(self):
         return self._title_first_word_exclude
+
+    def get_storage_capacity(self):
+        return self._storage_capacity
+
+    def get_model(self):
+        return self._model
