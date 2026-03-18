@@ -15,10 +15,10 @@ class Worker:
     def __init__(self, item_to_monitor):
         self.logger = logging.getLogger(__name__)
         self._item_monitoring = item_to_monitor
-        self._notified_articles = self._request_articles()
+        self._notified_articles = self._fetch_all_articles()
         self.telegram_manager = TelegramManager()
 
-    def _create_url(self):
+    def _create_url(self, model=None):
         url = (
             f"http://api.wallapop.com/api/v3/search"
             f"?source=search_box"
@@ -44,10 +44,12 @@ class Worker:
         if hasattr(self._item_monitoring, '_brand') and self._item_monitoring._brand:
             url += f"&category_id=24200&subcategory_ids=9447&brand={self._item_monitoring._brand}"
 
+        if model:
+            url += f"&model={requests.utils.quote(model)}"
+
         return url
 
-    def _request_articles(self):
-        url = self._create_url()
+    def _request_articles_for_url(self, url):
         while True:
             try:
                 headers = {
@@ -62,8 +64,19 @@ class Worker:
                 time.sleep(REQUEST_RETRY_TIME)
         json_response = response.json()
         json_items = json_response['data']['section']['payload']['items']
-        articles = self._parse_json_response(json_items)
-        return articles
+        return self._parse_json_response(json_items)
+
+    def _fetch_all_articles(self):
+        model_list = self._item_monitoring.get_model_list()
+        if model_list:
+            articles = []
+            for model in model_list:
+                url = self._create_url(model=model)
+                articles += self._request_articles_for_url(url)
+            return articles
+        else:
+            url = self._create_url()
+            return self._request_articles_for_url(url)
 
     def _parse_json_response(self, json_response):
         articles = []
@@ -95,13 +108,6 @@ class Worker:
                 return True
         return False
 
-    def _title_has_required_model(self, article_title):
-        # Si hay modelos configurados, el titulo debe contener al menos uno
-        model_list = self._item_monitoring.get_model_list()
-        if not model_list:
-            return True  # sin filtro de modelo, pasa todo
-        return any(model in article_title for model in model_list)
-
     def _meets_item_conditions(self, article):
         if article in self._notified_articles:
             return False
@@ -113,7 +119,6 @@ class Worker:
             and not self._title_has_excluded_words(article_title)
             and not self._description_has_excluded_words(article_description)
             and not self._title_first_word_is_excluded(article_title)
-            and self._title_has_required_model(article_title)
         ):
             return True
         else:
@@ -124,7 +129,7 @@ class Worker:
         exec_times = []
         while True:
             start_time = time.time()
-            articles = self._request_articles()
+            articles = self._fetch_all_articles()
             new_articles = 0
             for article in articles:
                 if self._meets_item_conditions(article):
