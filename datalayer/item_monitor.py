@@ -2,7 +2,7 @@ class ItemMonitor:
     def __init__(self, search_query, latitude, longitude, max_distance,
                         condition, min_price, max_price, title_exclude,
                         description_exclude, title_must_include, description_must_include,
-                        title_first_word_exclude, storage_capacity='', brand=''):
+                        title_first_word_exclude, storage_capacity='', brand='', model=''):
         self._search_query = search_query
         self._latitude = latitude
         self._longitude = longitude
@@ -17,6 +17,7 @@ class ItemMonitor:
         self._title_first_word_exclude = title_first_word_exclude
         self._storage_capacity = storage_capacity
         self._brand = brand
+        self._model = model  # modelos concretos separados por coma, para filtrar en title
 
     @classmethod
     def load_from_json(cls, json_data):
@@ -34,7 +35,8 @@ class ItemMonitor:
             json_data['description_must_include'],
             json_data['title_first_word_exclude'],
             json_data.get('storage_capacity', ''),
-            json_data.get('brand', json_data.get('model', ''))
+            json_data.get('brand', ''),
+            json_data.get('model', '')
         )
 
     def get_search_query(self):
@@ -78,3 +80,12 @@ class ItemMonitor:
 
     def get_brand(self):
         return self._brand
+
+    def get_model(self):
+        return self._model
+
+    def get_model_list(self):
+        # Devuelve lista de modelos si hay varios separados por coma, o lista vacia
+        if self._model:
+            return [m.strip().lower() for m in self._model.split(',') if m.strip()]
+        return []
