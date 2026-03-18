@@ -41,8 +41,8 @@ class Worker:
         if hasattr(self._item_monitoring, '_storage_capacity') and self._item_monitoring._storage_capacity:
             url += f"&filters_source=default_filters&storage_capacity={self._item_monitoring._storage_capacity}"
 
-        if hasattr(self._item_monitoring, '_model') and self._item_monitoring._model:
-            url += f"&model={self._item_monitoring._model}"
+        if hasattr(self._item_monitoring, '_brand') and self._item_monitoring._brand:
+            url += f"&category_id=24200&subcategory_ids=9447&brand={self._item_monitoring._brand}"
 
         return url
 
