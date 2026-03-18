@@ -42,9 +42,9 @@ def configure_logger():
 
 
 def parse_items_to_monitor():
-    with open("args.json") as f:
-        args = json.load(f)
-        items = [ItemMonitor.load_from_json(item) for item in args]
+    args_json = os.environ.get("ARGS_JSON")
+    args = json.loads(args_json)
+    items = [ItemMonitor.load_from_json(item) for item in args]
     return items
 
 
