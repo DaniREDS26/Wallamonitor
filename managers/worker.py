@@ -36,7 +36,7 @@ class Worker:
             url += f"&distance_in_km={self._item_monitoring._max_distance}"
 
         if self._item_monitoring.get_condition() != "all":
-            url += f"&condition={self._item_monitoring.get_condition()}"  # new, as_good_as_new, good, fair, has_given_it_all
+            url += f"&condition={self._item_monitoring.get_condition()}"
 
         if hasattr(self._item_monitoring, '_storage_capacity') and self._item_monitoring._storage_capacity:
             url += f"&filters_source=default_filters&storage_capacity={self._item_monitoring._storage_capacity}"
@@ -95,6 +95,13 @@ class Worker:
                 return True
         return False
 
+    def _title_has_required_model(self, article_title):
+        # Si hay modelos configurados, el titulo debe contener al menos uno
+        model_list = self._item_monitoring.get_model_list()
+        if not model_list:
+            return True  # sin filtro de modelo, pasa todo
+        return any(model in article_title for model in model_list)
+
     def _meets_item_conditions(self, article):
         if article in self._notified_articles:
             return False
@@ -106,6 +113,7 @@ class Worker:
             and not self._title_has_excluded_words(article_title)
             and not self._description_has_excluded_words(article_description)
             and not self._title_first_word_is_excluded(article_title)
+            and self._title_has_required_model(article_title)
         ):
             return True
         else:
