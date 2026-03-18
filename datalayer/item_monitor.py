@@ -17,7 +17,7 @@ class ItemMonitor:
         self._title_first_word_exclude = title_first_word_exclude
         self._storage_capacity = storage_capacity
         self._brand = brand
-        self._model = model  # modelos concretos separados por coma, para filtrar en title
+        self._model = model
 
     @classmethod
     def load_from_json(cls, json_data):
@@ -85,7 +85,7 @@ class ItemMonitor:
         return self._model
 
     def get_model_list(self):
-        # Devuelve lista de modelos si hay varios separados por coma, o lista vacia
+        # Devuelve lista de modelos respetando mayusculas para la API de Wallapop
         if self._model:
-            return [m.strip().lower() for m in self._model.split(',') if m.strip()]
+            return [m.strip() for m in self._model.split(',') if m.strip()]
         return []
